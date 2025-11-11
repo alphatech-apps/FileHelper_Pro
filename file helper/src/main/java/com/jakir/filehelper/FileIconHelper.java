@@ -2,6 +2,13 @@ package com.jakir.filehelper;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.PictureDrawable;
+import android.net.Uri;
+
+import com.caverock.androidsvg.SVG;
+
+import java.io.File;
+import java.io.InputStream;
 
 //
 // Created by JAKIR HOSSAIN on 11/6/2025.
@@ -61,8 +68,17 @@ public class FileIconHelper {
             else if (fileName.endsWith(".sql"))
                 return context.getDrawable(R.drawable.file_ic_sql_8_256);
             else if (fileName.endsWith(".svg")) {
-                return context.getDrawable(R.drawable.file_ic_svg);
-            } else if (fileName.endsWith(".tiff") || fileName.endsWith(".tif"))
+                try {
+                    File file = new File(fileName);
+                    InputStream inputStream = context.getContentResolver().openInputStream(Uri.fromFile(file));
+                    SVG svg = SVG.getFromInputStream(inputStream);
+                    PictureDrawable drawable = new PictureDrawable(svg.renderToPicture());
+                    return drawable;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return context.getDrawable(R.drawable.file_ic_svg);
+                }
+             } else if (fileName.endsWith(".tiff") || fileName.endsWith(".tif"))
                 return context.getDrawable(R.drawable.file_ic_tiff);
             else if (fileName.endsWith(".txt")) return context.getDrawable(R.drawable.file_ic_txt);
             else if (fileName.endsWith(".wav")) return context.getDrawable(R.drawable.file_ic_wav);
