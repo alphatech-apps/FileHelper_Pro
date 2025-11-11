@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="24dp"
+    android:paddingTop="24dp"
+    android:paddingEnd="24dp">
+
+    <!-- Sort Type -->
+    <RadioGroup
+        android:id="@+id/rgSortType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:drawableTint="?colorControlNormal"
+            android:id="@+id/rbName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/sort_by_alphabet_svgrepo_com"
+            android:text="Name" />
+
+        <RadioButton
+            android:drawableTint="?colorControlNormal"
+            android:id="@+id/rbSize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/sort_by_size_svgrepo_com"
+            android:text="Size" />
+
+        <RadioButton
+            android:drawableTint="?colorControlNormal"
+            android:id="@+id/rbDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/sort_by_time_svgrepo_com"
+            android:text="Date" />
+
+        <RadioButton
+            android:drawableTint="?colorControlNormal"
+            android:id="@+id/rbType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/sort_by_type_pattern_svgrepo_com"
+            android:text="Type" />
+    </RadioGroup>
+
+    <!-- Sort Order -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp"
+        android:text="Order"
+        android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+    <RadioGroup
+        android:id="@+id/rgSortOrder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:drawableTint="?colorControlNormal"
+            android:id="@+id/rbAsc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/sort_from_top_to_bottom_svgrepo_com"
+            android:text="Ascending" />
+
+        <RadioButton
+            android:drawableTint="?colorControlNormal"
+            android:id="@+id/rbDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableEnd="@drawable/sort_from_bottom_to_top_svgrepo_com"
+            android:text="Descending" />
+    </RadioGroup>
+
+    <!-- Folders First -->
+    <CheckBox
+        android:id="@+id/cbFoldersFirst"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:drawableTint="?colorControlNormal"
+        android:drawableEnd="@drawable/ic_folder_open_side"
+        android:text="Folders First" />
+</LinearLayout>
