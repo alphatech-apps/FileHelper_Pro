@@ -4,8 +4,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.jakir.filehelper.FileUtility;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,51 +12,57 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class FileCopyMoveUtilitynew {
+public class FileCopyMoveUtility2 {
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    // Async copy/move with progress, cancel, background continue
-    public static void safeCopyOrMoveAsync(Context context, File source, File dest, boolean isMove, long totalSize, AtomicBoolean isCancelled, CopyProgressListener listener, CopyResultCallback callback) {
 
+    public static void safeCopyOrMoveAsync(Context context, File source, File dest, boolean isMove, long totalSize, AtomicBoolean isCancelled, CopyProgressListener listener, CopyResultCallback callback) {
         executor.submit(() -> {
-            boolean result = copyOrMove(source, dest, isMove, isCancelled, listener, totalSize);
+            boolean result;
+            long totalCopied = copyOrMove(source, dest, isMove, isCancelled, listener, totalSize);
 
             // Cancel cleanup
             if (isCancelled.get() && dest.exists()) {
                 deleteRecursive(dest);
                 result = false;
+            } else {
+                result = true;
             }
 
             boolean finalResult = result;
-            mainHandler.post(() -> callback.onComplete(finalResult));
+            long fileCopiedSize = totalCopied;
+            mainHandler.post(() -> callback.onComplete(finalResult, fileCopiedSize));
         });
     }
 
-    // ---------------- Internal Logic ----------------
-    private static boolean copyOrMove(File source, File dest, boolean isMove, AtomicBoolean isCancelled, CopyProgressListener listener, long totalSize) {
+    private static long copyOrMove(File source, File dest, boolean isMove, AtomicBoolean isCancelled, CopyProgressListener listener, long totalSize) {
 
-        if (isCancelled.get()) return false;
+        if (isCancelled.get()) return 0;
 
-        long[] copiedSize = {0};
+        long copiedSize = 0;
 
         if (source.isDirectory()) {
-            return copyOrMoveFolder(source, dest, isMove, isCancelled, listener, copiedSize, totalSize);
+            copiedSize += copyOrMoveFolder(source, dest, isMove, isCancelled, listener, totalSize, copiedSize);
         } else {
-            return copyOrMoveFile(source, dest, isMove, isCancelled, listener, copiedSize, totalSize);
+            copiedSize += copyOrMoveFile(source, dest, isMove, isCancelled, listener, totalSize, copiedSize);
         }
+
+        return copiedSize;
     }
 
-    private static boolean copyOrMoveFolder(File source, File dest, boolean isMove, AtomicBoolean isCancelled, CopyProgressListener listener, long[] copiedSize, long totalSize) {
+    private static long copyOrMoveFolder(File source, File dest, boolean isMove, AtomicBoolean isCancelled, CopyProgressListener listener, long totalSize, long copiedSoFar) {
 
-        if (isCancelled.get()) return false;
+        if (isCancelled.get()) return copiedSoFar;
 
-        // Fast move try
+        long copiedInThisFolder = 0;
+
+        // Fast move try (rename)
         if (isMove && source.renameTo(dest)) {
-            if (listener != null)
-                updateListener(listener, FileUtility.getTotalSize(dest), totalSize, source.getName());
-            return true;
+            copiedInThisFolder = FileUtility.getTotalSize(dest); // Folder total size after move
+            updateListener(listener, copiedSoFar + copiedInThisFolder, totalSize, source.getName());
+            return copiedInThisFolder;
         }
 
         if (!dest.exists()) dest.mkdirs();
@@ -66,44 +70,45 @@ public class FileCopyMoveUtilitynew {
         File[] files = source.listFiles();
         if (files != null) {
             for (File file : files) {
-                if (isCancelled.get()) return false;
+                if (isCancelled.get()) return copiedSoFar;
 
                 File newDest = new File(dest, file.getName());
-                boolean success;
+
                 if (file.isDirectory()) {
                     // Recursive call for subfolder
-                    success = copyOrMoveFolder(file, newDest, isMove, isCancelled, listener, copiedSize, totalSize);
+                    copiedInThisFolder += copyOrMoveFolder(file, newDest, isMove, isCancelled, listener, totalSize, copiedSoFar + copiedInThisFolder);
                 } else {
                     // Copy single file
-                    success = copyOrMoveFile(file, newDest, isMove, isCancelled, listener, copiedSize, totalSize);
+                    copiedInThisFolder += copyOrMoveFile(file, newDest, isMove, isCancelled, listener, totalSize, copiedSoFar + copiedInThisFolder);
                 }
 
-                if (!success && isCancelled.get()) {
+                if (isCancelled.get()) {
                     deleteRecursive(dest);
-                    return false;
+                    return copiedSoFar;
                 }
             }
         }
 
         if (isMove) deleteRecursive(source);
 
-        return true;
+        return copiedInThisFolder;
     }
 
-    private static boolean copyOrMoveFile(File source, File dest, boolean isMove, AtomicBoolean isCancelled, CopyProgressListener listener, long[] copiedSize, long totalSize) {
+    private static long copyOrMoveFile(File source, File dest, boolean isMove, AtomicBoolean isCancelled, CopyProgressListener listener, long totalSize, long copiedSoFar) {
 
-        if (isCancelled.get()) return false;
+        if (isCancelled.get()) return 0;
+
+        long fileCopied = 0;
 
         // Fast move try
         if (isMove && source.renameTo(dest)) {
-            copiedSize[0] += source.length();
-            updateListener(listener, copiedSize[0], totalSize, source.getName());
-            return true;
+            fileCopied = FileUtility.getTotalSize(dest); // Folder total size after move
+            updateListener(listener, copiedSoFar + fileCopied, totalSize, source.getName());
+            return fileCopied;
         }
 
         try (FileInputStream in = new FileInputStream(source); FileOutputStream out = new FileOutputStream(dest)) {
 
-            // Dynamic buffer size
             long totalBytes = source.length();
             int bufferSize = totalBytes < 10 * 1024 * 1024 ? 8 * 1024 :    // <10MB → 8KB
                     totalBytes < 100 * 1024 * 1024 ? 16 * 1024 :  // <100MB → 16KB
@@ -116,40 +121,37 @@ public class FileCopyMoveUtilitynew {
             while ((length = in.read(buffer)) > 0) {
                 if (isCancelled.get()) {
                     if (dest.exists()) dest.delete();
-                    return false;
+                    return fileCopied;
                 }
 
                 out.write(buffer, 0, length);
-                copiedSize[0] += length;
+                fileCopied += length;
 
-                // Update progress every 500ms (not every chunk)
                 long now = System.currentTimeMillis();
                 if (now - lastUpdate > 500) {
-                    updateListener(listener, copiedSize[0], totalSize, source.getName());
+                    updateListener(listener, copiedSoFar + fileCopied, totalSize, source.getName());
                     lastUpdate = now;
                 }
             }
             out.flush();
 
-            // Final 100% update
-            updateListener(listener, copiedSize[0], totalSize, source.getName());
+            updateListener(listener, copiedSoFar + fileCopied, totalSize, source.getName());
 
         } catch (IOException e) {
             e.printStackTrace();
             if (dest.exists()) dest.delete();
-            return false;
+            return 0;
         }
 
         if (isMove) source.delete();
-        return true;
+        return fileCopied;
     }
 
-    private static void updateListener(CopyProgressListener listener, long copiedSize, long totalSize, String name) {
+    private static void updateListener(CopyProgressListener listener, long copied, long totalSize, String name) {
         if (listener != null) {
-            mainHandler.post(() -> listener.onProgress(copiedSize, totalSize, name));
+            mainHandler.post(() -> listener.onProgress(copied, totalSize, name));
         }
     }
-
 
     public static void deleteRecursive(File fileOrDir) {
         if (fileOrDir.isDirectory()) {
@@ -164,6 +166,6 @@ public class FileCopyMoveUtilitynew {
     }
 
     public interface CopyResultCallback {
-        void onComplete(boolean success);
+        void onComplete(boolean success, long fileCopiedSize);
     }
 }
