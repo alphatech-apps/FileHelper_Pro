@@ -28,13 +28,19 @@ public class FileUtility_totalItemCache {
 
     // 🔹 Get total items inside a folder (your existing logic)
     public static String getTotalItemsInsideFolder(File folder) {
-        if (folder == null || !folder.isDirectory()) return "";
+        if (folder == null || !folder.exists() || !folder.isDirectory()){
+            return "";
+        }
+
         File[] files = folder.listFiles();
-        if (files == null) return "Empty folder";
+        if (files == null || files.length == 0) {
+            return "Empty folder";
+        }
 
         int count = files.length;
         return count + (count == 1 ? " item" : " items");
     }
+
 
     // 🔹 Get cached item count instantly, then refresh in background
     public static void getCachedFolderItemCount(File file, TextView textView, Object tag) {

@@ -9,7 +9,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -20,14 +19,20 @@ public final class FileUtility {
     private FileUtility() {
     }
 
-    public static String getTotalItemsInsideFolder(File file) {
-        File[] files = file.listFiles();
-        if (files != null && files.length > 0) {
-            return files.length + " items";
-        } else {
-            return "Empty Folder";
+    public static String getTotalItemsInsideFolder(File folder) {
+        if (folder == null || !folder.exists() || !folder.isDirectory()){
+            return "Empty folder";
         }
+
+        File[] files = folder.listFiles();
+        if (files == null || files.length == 0) {
+            return "Empty folder";
+        }
+
+        int count = files.length;
+        return count + (count == 1 ? " item" : " items");
     }
+
 
     public static long getTotalSize(File file) {
         if (file.isFile()) return file.length();
@@ -40,28 +45,7 @@ public final class FileUtility {
         return total;
     }
 
-    public static long getFolderSize(File folder) {
-        long length = 0;
-        File[] files = folder.listFiles();
-        if (files != null) {
-            for (File f : files) {
-                if (f.isFile()) length += f.length();
-                else length += getFolderSize(f);
-            }
-        }
-        return length;
-    }
-
-    private static long getFolderSize2(File folder) {
-        if (folder == null || !folder.exists()) return 0;
-
-        File[] files = folder.listFiles();
-        if (files == null) return 0;
-
-        return Arrays.stream(files).mapToLong(file -> file.isDirectory() ? getFolderSize2(file) : file.length()).sum();
-    }
-
-    public static void getTotalFileFolderInside(List<File> selectedFiles, FileFolderCallback callback) {
+    public static void getTotalFileFolder(List<File> selectedFiles, FileFolderCallback callback) {
         new Thread(() -> {
             AtomicInteger folderCount = new AtomicInteger(0);
             AtomicInteger fileCount = new AtomicInteger(0);
@@ -90,7 +74,7 @@ public final class FileUtility {
         }
     }
 
-    public static void getAllTotalFolderFileDetails(List<File> selectedFiles, FolderFileDetailsCallback callback) {
+    public static void getTotalFileFolderSize(List<File> selectedFiles, FileFolderSizeCallback callback) {
         new Thread(() -> {
             AtomicInteger folderCount = new AtomicInteger(0);
             AtomicInteger fileCount = new AtomicInteger(0);
@@ -119,13 +103,6 @@ public final class FileUtility {
             fileCount.incrementAndGet();
             totalSize.addAndGet(file.length());
         }
-    }
-
-    public static String humanReadableSize2(long size) {
-        if (size <= 0) return "0 B";
-        final String[] units = new String[]{"B", "KB", "MB", "GB", "TB"};
-        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
-        return new java.text.DecimalFormat("#,##0.##").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
     public static String humanReadableSize(long bytes) {
@@ -200,7 +177,7 @@ public final class FileUtility {
     }
 
 
-    public interface FolderFileDetailsCallback {
+    public interface FileFolderSizeCallback {
         void onDetailsCalculated(int folderCount, int fileCount, long totalSize);
     }
 
