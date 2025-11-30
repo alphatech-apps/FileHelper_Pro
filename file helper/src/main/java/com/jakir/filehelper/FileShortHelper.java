@@ -31,9 +31,9 @@ public class FileShortHelper {
         CheckBox cbFoldersFirst = view.findViewById(R.id.cbFoldersFirst);
 
         // Load saved prefs
-        int typePref = Pref.getiValue(Key.sortType, context);
-        int orderPref = Pref.getiValue(Key.sortOrder, context);
-        boolean foldersFirst = Pref.getStatep(Key.foldersFirst, context);
+        int typePref = Pref.getInteger(Key.sortType, context);
+        int orderPref = Pref.getInteger(Key.sortOrder, context);
+        boolean foldersFirst = Pref.getBoolean(Key.foldersFirst, context,true);
 
         // Preselect current values
         rgType.check(getTypeRadioId(typePref));
@@ -45,15 +45,15 @@ public class FileShortHelper {
             // Save type
             int typeId = rgType.getCheckedRadioButtonId();
             FileShortHelper.SortType type = getTypeFromRadioId(typeId);
-            Pref.setiValue(type.ordinal(), Key.sortType, context);
+            Pref.setInteger(Key.sortType,type.ordinal(),  context);
 
             // Save order
             int orderId = rgOrder.getCheckedRadioButtonId();
             FileShortHelper.SortOrder order = orderId == R.id.rbAsc ? FileShortHelper.SortOrder.ASCENDING : FileShortHelper.SortOrder.DESCENDING;
-            Pref.setiValue(order.ordinal(), Key.sortOrder, context);
+            Pref.setInteger( Key.sortOrder,order.ordinal(), context);
 
             // Save foldersFirst
-            Pref.setStatep(cbFoldersFirst.isChecked(), Key.foldersFirst, context);
+            Pref.setBoolean( Key.foldersFirst,cbFoldersFirst.isChecked(), context);
 
             ((Activity) context).recreate();
         }).setNegativeButton("Cancel", null).setCancelable(false).create()
