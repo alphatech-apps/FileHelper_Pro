@@ -12,7 +12,6 @@ import android.widget.RadioGroup;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.jakir.pref.Pref;
 
 import java.io.File;
 import java.util.Comparator;
@@ -22,7 +21,7 @@ import java.util.Comparator;
 //
 public class FileShortHelper {
 
-    public static void showSortDialog(Context context) {
+    public static void showSortDialog(Context context, int typePref, int orderPref, boolean foldersFirst, OnShortChooiseCallback callback) {
         // Inflate custom dialog layout
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_sort, null);
 
@@ -30,10 +29,10 @@ public class FileShortHelper {
         RadioGroup rgOrder = view.findViewById(R.id.rgSortOrder);
         CheckBox cbFoldersFirst = view.findViewById(R.id.cbFoldersFirst);
 
-        // Load saved prefs
-        int typePref = Pref.getInteger(Key.sortType, context);
-        int orderPref = Pref.getInteger(Key.sortOrder, context);
-        boolean foldersFirst = Pref.getBoolean(Key.foldersFirst, context,true);
+//        // Load saved prefs
+//        int typePref = Pref.getInteger(Key.sortType, context);
+//        int orderPref = Pref.getInteger(Key.sortOrder, context);
+//        boolean foldersFirst = Pref.getBoolean(Key.foldersFirst, context, true);
 
         // Preselect current values
         rgType.check(getTypeRadioId(typePref));
@@ -45,17 +44,20 @@ public class FileShortHelper {
             // Save type
             int typeId = rgType.getCheckedRadioButtonId();
             FileShortHelper.SortType type = getTypeFromRadioId(typeId);
-            Pref.setInteger(Key.sortType,type.ordinal(),  context);
+//            Pref.setInteger(Key.sortType, type.ordinal(), context);
 
             // Save order
             int orderId = rgOrder.getCheckedRadioButtonId();
             FileShortHelper.SortOrder order = orderId == R.id.rbAsc ? FileShortHelper.SortOrder.ASCENDING : FileShortHelper.SortOrder.DESCENDING;
-            Pref.setInteger( Key.sortOrder,order.ordinal(), context);
+//            Pref.setInteger(Key.sortOrder, order.ordinal(), context);
 
             // Save foldersFirst
-            Pref.setBoolean( Key.foldersFirst,cbFoldersFirst.isChecked(), context);
+//            Pref.setBoolean(Key.foldersFirst, cbFoldersFirst.isChecked(), context);
 
             ((Activity) context).recreate();
+
+            callback.onShortChooise(type.ordinal(), order.ordinal(), cbFoldersFirst.isChecked());
+
         }).setNegativeButton("Cancel", null).setCancelable(false).create()
                 ;
         dialog.show();
@@ -133,6 +135,10 @@ public class FileShortHelper {
 
     public enum SortOrder {
         ASCENDING, DESCENDING
+    }
+
+    public interface OnShortChooiseCallback {
+        void onShortChooise(int type, int order, boolean cbFoldersFirst);
     }
 }
 
