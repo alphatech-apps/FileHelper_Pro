@@ -20,6 +20,9 @@ import java.util.Comparator;
 // Created by JAKIR HOSSAIN on 8/29/2025.
 //
 public class FileShortHelper {
+    public static String foldersFirst = "foldersFirst";
+    public static String sortType = "sortType";
+    public static String sortOrder = "sortOrder";
 
     public static void showSortDialog(Context context, int typePref, int orderPref, boolean foldersFirst, OnShortChooiseCallback callback) {
         // Inflate custom dialog layout
