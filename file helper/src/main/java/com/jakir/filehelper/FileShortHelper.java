@@ -57,7 +57,7 @@ public class FileShortHelper {
             // Save foldersFirst
 //            Pref.setBoolean(Key.foldersFirst, cbFoldersFirst.isChecked(), context);
 
-            ((Activity) context).recreate();
+//            ((Activity) context).recreate();
 
             callback.onShortChooise(type.ordinal(), order.ordinal(), cbFoldersFirst.isChecked());
 
